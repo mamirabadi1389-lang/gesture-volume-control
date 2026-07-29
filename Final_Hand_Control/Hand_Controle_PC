@@ -93,7 +93,6 @@ def control_with_hand():
                 cv2.putText(img, f"Fingers -> {finger_count}", (20, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
 
-                # --- gesture: switch between apps ---
                 current_time = time.time()
                 if finger_count == 5 and (current_time - last_switch_time) > switch_cooldown:
                     pyautogui.hotkey('alt', 'tab')
