@@ -20,11 +20,11 @@ hands = mpHands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.7)
 
 MENU = """
 ╔════════════════════════════════╗
-║        Hand Gesture Menu        ║
+║        Hand Gesture Menu       ║
 ╠════════════════════════════════╣
-║  1. Namayeshe chehre             ║
-║  2. Control ba dast              ║
-║  3. Khorooj                      ║
+║  1. Namayeshe chehre           ║
+║  2. Control ba dast            ║
+║  3. Khorooj                    ║
 ╚════════════════════════════════╝
 """
 
