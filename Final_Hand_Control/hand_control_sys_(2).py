@@ -5,6 +5,7 @@ import numpy as np
 from pycaw.pycaw import AudioUtilities
 import pyautogui
 import time
+import pygetwindow as gw
 
 device = AudioUtilities.GetSpeakers()
 
@@ -64,21 +65,41 @@ def show_face():
 
     cv2.destroyWindow("Image")
 
+def get_open_windows():
+    windows = [w for w in gw.getAllWindows() if w.title.strip() != ""]
+    return windows
+
+def switch_to_window_by_index(index):
+    windows = get_open_windows()
+    if 0 <= index < len(windows):
+        win = windows[index]
+        if win.isMinimized:
+            win.restore()
+        win.activate()
+
+
 def control_with_hand():
     print("\n[Halate control ba dast faal shod] Baraye khorooj 'q' ro bezan.\n")
     prev_vol = min_vol
-    gesture_hold_frames = 0
-    required_hold_frames = 15
-    gesture_triggered = False
+    switch_hold_frames = 0
+    required_hold_frames = 20
+    switch_triggered = False
 
     while True:
         success, img = cap.read()
         if not success:
-            print("Khata: natoonestam az doorbin frame begiram.")
             break
 
         imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         result = hands.process(imgRGB)
+
+        # namayeshe listw barnamehaye baz - hamishe neshoon bede, hata bedoone dast
+        windows = get_open_windows()
+        y_offset = 120
+        for i, w in enumerate(windows[:5]):
+            text = f"{i+1}: {w.title[:30]}"
+            cv2.putText(img, text, (20, y_offset), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+            y_offset += 25
 
         if result.multi_hand_landmarks:
             hand = result.multi_hand_landmarks[0]
@@ -86,8 +107,8 @@ def control_with_hand():
 
             lmList = []
             for id, lm in enumerate(hand.landmark):
-                h, w, c = img.shape
-                cx, cy = int(lm.x * w), int(lm.y * h)
+                h, w_img, c = img.shape
+                cx, cy = int(lm.x * w_img), int(lm.y * h)
                 lmList.append([id, cx, cy])
 
             if len(lmList):
@@ -95,19 +116,20 @@ def control_with_hand():
                 cv2.putText(img, f"Fingers -> {finger_count}", (20, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
 
-                # --- gesture: switch between apps (with hold + debounce) ---
-                if finger_count == 5:
-                    gesture_hold_frames += 1
+                # --- gesture: switch be barname bar asase shomare ---
+                if finger_count >= 1:
+                    switch_hold_frames += 1
                 else:
-                    gesture_hold_frames = 0
-                    gesture_triggered = False
+                    switch_hold_frames = 0
+                    switch_triggered = False
 
-                if gesture_hold_frames >= required_hold_frames and not gesture_triggered:
-                    pyautogui.hotkey('alt', 'tab')
-                    gesture_triggered = True
+                if switch_hold_frames >= required_hold_frames and not switch_triggered:
+                    switch_to_window_by_index(finger_count - 1)
+                    switch_triggered = True
 
+                # ... baghiye codet (volume, khat, dayereh) hamintori mimoone
                 # namayeshe progress bar baraye hold (ekhtiari, kheili mofid)
-                progress = min(gesture_hold_frames / required_hold_frames, 1.0)
+                progress = min(switch_hold_frames / required_hold_frames, 1.0)
                 cv2.rectangle(img, (20, 70), (20 + int(200 * progress), 90), (0, 255, 0), cv2.FILLED)
                 cv2.rectangle(img, (20, 70), (220, 90), (255, 255, 255), 2)
 
